@@ -3,10 +3,24 @@ import Header from '../components/header/Header';
 import useLogin from '../hooks/login.hook';
 
 const Home = () => {
-  const { token, logout, loginUser, stateProcess } = useLogin();
+  const {
+    token,
+    logout,
+    simpleLoginUser,
+    googleLoginUser,
+    facebookLoginUser,
+    stateProcess,
+  } = useLogin();
 
   if (!token) {
-    return <Login loginUser={loginUser} stateProcess={stateProcess} />;
+    return (
+      <Login
+        simpleLoginUser={simpleLoginUser}
+        googleLoginUser={googleLoginUser}
+        facebookLoginUser={facebookLoginUser}
+        stateProcess={stateProcess}
+      />
+    );
   }
 
   return (

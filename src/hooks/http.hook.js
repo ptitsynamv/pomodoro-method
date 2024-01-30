@@ -7,13 +7,17 @@ export const useHttp = () => {
     async (
       url,
       method = 'GET',
-      body = null,
+      body = {},
       headers = { 'Content-Type': 'application/json' }
     ) => {
       setStateProcess('loading');
 
       try {
-        const response = await fetch(url, { method, body, headers });
+        const response = await fetch(url, {
+          method,
+          body: JSON.stringify(body),
+          headers,
+        });
         if (!response.ok) {
           throw new Error(`Could not fetch ${url}, status: ${response.status}`);
         }

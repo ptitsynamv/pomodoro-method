@@ -1,39 +1,79 @@
 import { useState } from 'react';
 import { useHttp } from './http.hook';
+import { googleLogout } from '@react-oauth/google';
+
+import defaultUser from '../resources/img/default-user.png';
 
 const useLogin = () => {
   const _apiBase = 'http://localhost:8080/login';
+  const _storageKey = 'AuthData';
 
   const getToken = () => {
-    const tokenString = localStorage.getItem('token'); // TODO:
-    const userToken = JSON.parse(tokenString);
-    return userToken?.token;
+    const authData = JSON.parse(localStorage.getItem(_storageKey));
+    return authData?.token;
   };
 
   const [token, setToken] = useState(getToken());
+  const [authType, setAuthType] = useState();
 
-  const { request, fakeRequest, clearError, stateProcess, setStateProcess } =
-    useHttp();
+  const { request, fakeRequest, stateProcess, setStateProcess } = useHttp();
 
-  const saveToken = (userToken) => {
-    localStorage.setItem('token', JSON.stringify(userToken)); // TODO:
-    setToken(userToken.token);
+  const saveAuthData = (authData) => {
+    localStorage.setItem(_storageKey, JSON.stringify(authData));
+    setToken(authData.token);
   };
 
-  const loginUser = async (credentials) => {
-    const res = await fakeRequest(`${_apiBase}`, 'POST', {
+  const simpleLoginUser = async (credential) => {
+    const result = await fakeRequest(`${_apiBase}`, 'POST', {
       token: 'fake-token',
+      email: 'fake@email.com',
+      name: credential.username,
+      picture: defaultUser,
     });
-    saveToken(res);
-    return res;
+    saveAuthData(result);
+    setAuthType('simple');
+  };
+
+  const googleLoginUser = async (credential) => {
+    const loginUrl = process.env.REACT_APP_GOOGLE_LOGIN_URL;
+
+    const result = await request(loginUrl, 'POST', {
+      token: credential,
+    });
+    saveAuthData(result.data);
+    setAuthType('google');
+  };
+
+  const facebookLoginUser = async (authInfo) => {
+    saveAuthData(authInfo);
+    setAuthType('facebook');
   };
 
   const logout = () => {
-    localStorage.clear('token'); // TODO:
+    localStorage.clear(_storageKey);
+    switch (authType) {
+      case 'google':
+        googleLogout();
+        break;
+      case 'simple':
+        break;
+      case 'facebook':
+        break;
+      default:
+    }
     setToken(null);
+    setAuthType(null);
   };
 
-  return { loginUser, logout, token, stateProcess, setStateProcess };
+  return {
+    simpleLoginUser,
+    googleLoginUser,
+    facebookLoginUser,
+    logout,
+    token,
+    stateProcess,
+    setStateProcess,
+  };
 };
 
 export default useLogin;
